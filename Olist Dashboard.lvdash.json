@@ -1,0 +1,864 @@
+{
+  "datasets": [
+    {
+      "name": "1b8a108b",
+      "displayName": "Star schema",
+      "queryLines": [
+        "\n",
+        "SELECT \n",
+        "    date_trunc('month', date_key) AS mois,\n",
+        "    ROUND(SUM(total_item_value), 2) AS chiffre_affaires\n",
+        "FROM dbw_lab.gold.fact_order_items\n",
+        "WHERE order_status = 'delivered'\n",
+        "GROUP BY mois\n",
+        "ORDER BY mois;"
+      ],
+      "catalog": "dbw_lab",
+      "schema": "gold"
+    },
+    {
+      "name": "8de15b67",
+      "displayName": "kpis",
+      "queryLines": [
+        "SELECT \n",
+        "    COUNT(DISTINCT order_id) AS total_commandes,\n",
+        "    ROUND(SUM(total_item_value), 2) AS chiffre_affaires_total\n",
+        "FROM dbw_lab.gold.fact_order_items\n",
+        "WHERE order_status = 'delivered';"
+      ]
+    },
+    {
+      "name": "2e038377",
+      "displayName": "categorie_rentables",
+      "queryLines": [
+        "SELECT \n",
+        "    p.category_name AS categorie,\n",
+        "    ROUND(SUM(f.total_item_value), 2) AS chiffre_affaires\n",
+        "FROM dbw_lab.gold.fact_order_items f\n",
+        "JOIN dbw_lab.gold.dim_products p ON f.product_id = p.product_id\n",
+        "WHERE p.category_name IS NOT NULL AND f.order_status = 'delivered'\n",
+        "GROUP BY p.category_name\n",
+        "ORDER BY chiffre_affaires DESC\n",
+        "LIMIT 10;"
+      ]
+    },
+    {
+      "name": "06a3c1d6",
+      "displayName": "Top_5_Clients",
+      "queryLines": [
+        "SELECT \n",
+        "    c.customer_unique_id AS id_client,\n",
+        "    COUNT(DISTINCT f.order_id) AS nombre_commandes,\n",
+        "    ROUND(SUM(f.total_item_value), 2) AS total_depense\n",
+        "FROM dbw_lab.gold.fact_order_items f\n",
+        "JOIN dbw_lab.gold.dim_customers c ON f.customer_id = c.customer_id\n",
+        "WHERE f.order_status = 'delivered'\n",
+        "GROUP BY c.customer_unique_id\n",
+        "ORDER BY total_depense DESC\n",
+        "LIMIT 5;"
+      ]
+    },
+    {
+      "name": "cc9f7bcd",
+      "displayName": "statut_commandes",
+      "queryLines": [
+        "SELECT \n",
+        "    order_status AS statut,\n",
+        "    COUNT(DISTINCT order_id) AS nombre_commandes\n",
+        "FROM dbw_lab.gold.fact_order_items\n",
+        "GROUP BY order_status;"
+      ]
+    },
+    {
+      "name": "4eee235f",
+      "displayName": "Ventes_par_Etat",
+      "queryLines": [
+        "SELECT \n",
+        "    'BR' AS pays,\n",
+        "    CONCAT('BR-', c.customer_state) AS etat_iso,\n",
+        "    ROUND(SUM(f.total_item_value), 2) AS chiffre_affaires\n",
+        "FROM dbw_lab.gold.fact_order_items f\n",
+        "JOIN dbw_lab.gold.dim_customers c ON f.customer_id = c.customer_id\n",
+        "WHERE f.order_status = 'delivered'\n",
+        "GROUP BY c.customer_state;"
+      ]
+    },
+    {
+      "name": "1c97b188",
+      "displayName": "commade_per_days",
+      "queryLines": [
+        "SELECT\n",
+        "  CASE dayofweek(date_key)\n",
+        "    WHEN 1 THEN 'Dimanche'\n",
+        "    WHEN 2 THEN 'Lundi'\n",
+        "    WHEN 3 THEN 'Mardi'\n",
+        "    WHEN 4 THEN 'Mercredi'\n",
+        "    WHEN 5 THEN 'Jeudi'\n",
+        "    WHEN 6 THEN 'Vendredi'\n",
+        "    WHEN 7 THEN 'Samedi'\n",
+        "  END AS jour_semaine,\n",
+        "  COUNT(DISTINCT order_id) AS nombre_commandes,\n",
+        "  dayofweek(date_key) AS num_jour\n",
+        "FROM\n",
+        "  dbw_lab.gold.fact_order_items\n",
+        "GROUP BY\n",
+        "  CASE dayofweek(date_key)\n",
+        "    WHEN 1 THEN 'Dimanche'\n",
+        "    WHEN 2 THEN 'Lundi'\n",
+        "    WHEN 3 THEN 'Mardi'\n",
+        "    WHEN 4 THEN 'Mercredi'\n",
+        "    WHEN 5 THEN 'Jeudi'\n",
+        "    WHEN 6 THEN 'Vendredi'\n",
+        "    WHEN 7 THEN 'Samedi'\n",
+        "  END,\n",
+        "  dayofweek(date_key)\n",
+        "ORDER BY\n",
+        "  num_jour;"
+      ]
+    },
+    {
+      "name": "ae4b12e1",
+      "displayName": "top+vendeurs",
+      "queryLines": [
+        "SELECT\n",
+        "  f.seller_id,\n",
+        "  s.seller_city,\n",
+        "  s.seller_state,\n",
+        "  CONCAT(s.seller_city, ' (', s.seller_state, ')') AS vendeur,\n",
+        "  ROUND(SUM(f.total_item_value), 2) AS chiffre_affaires_vendeur\n",
+        "FROM\n",
+        "  dbw_lab.gold.fact_order_items f\n",
+        "    JOIN dbw_lab.gold.dim_sellers s\n",
+        "      ON f.seller_id = s.seller_id\n",
+        "WHERE\n",
+        "  f.order_status = 'delivered'\n",
+        "GROUP BY\n",
+        "  f.seller_id,\n",
+        "  s.seller_city,\n",
+        "  s.seller_state\n",
+        "ORDER BY\n",
+        "  chiffre_affaires_vendeur DESC\n",
+        "LIMIT 5;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "d9aac654",
+      "displayName": "Dash",
+      "layout": [
+        {
+          "widget": {
+            "name": "volume-total-des-commandes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "8de15b67",
+                  "fields": [
+                    {
+                      "name": "sum(total_commandes)",
+                      "expression": "SUM(`total_commandes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "### <span style=\"text-align:center;display:block\">Volume Total des Commandes</span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(total_commandes)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "chiffre-affaires-global",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "8de15b67",
+                  "fields": [
+                    {
+                      "name": "sum(chiffre_affaires_total)",
+                      "expression": "SUM(`chiffre_affaires_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "### <span style=\"text-align:center;display:block\">Chiffre d'Affaires Global</span>",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(chiffre_affaires_total)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "evolution-mensuelle-chiffre-affaires",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "1b8a108b",
+                  "fields": [
+                    {
+                      "name": "monthly(mois)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `mois`)"
+                    },
+                    {
+                      "name": "chiffre_affaires",
+                      "expression": "`chiffre_affaires`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\">Évolution Mensuelle du Chiffre d'Affaires</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(mois)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "chiffre_affaires",
+                  "displayName": "Chiffre d'affaire",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "top-10-categories-plus-rentables",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2e038377",
+                  "fields": [
+                    {
+                      "name": "categorie",
+                      "expression": "`categorie`"
+                    },
+                    {
+                      "name": "chiffre_affaires",
+                      "expression": "`chiffre_affaires`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "### <span style=\"text-align:center;display:block;\">Top 10 des Catégories les Plus Rentables</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "selectionColor"
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "categorie",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "chiffre_affaires",
+                  "displayName": "Chiffre d'affaires",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "repartition-statuts-commandes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "cc9f7bcd",
+                  "fields": [
+                    {
+                      "name": "sum(nombre_commandes)",
+                      "expression": "SUM(`nombre_commandes`)"
+                    },
+                    {
+                      "name": "statut",
+                      "expression": "`statut`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "#### <span style=\"text-align:center;display:block\">**Répartition des Statuts de Commandes**.</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(nombre_commandes)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Nombre des commandes"
+                },
+                "color": {
+                  "fieldName": "statut",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 0,
+            "width": 7,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "repartition-ventes-par-etat",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "4eee235f",
+                  "fields": [
+                    {
+                      "name": "sum(chiffre_affaires)",
+                      "expression": "SUM(`chiffre_affaires`)"
+                    },
+                    {
+                      "name": "pays",
+                      "expression": "`pays`"
+                    },
+                    {
+                      "name": "etat_iso",
+                      "expression": "`etat_iso`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "<span style=\"text-align:center;display:block;\">**Répartition des Ventes par État**.</span>",
+                  "fields": []
+                }
+              },
+              "version": 1,
+              "widgetType": "choropleth-map",
+              "encodings": {
+                "color": {
+                  "fieldName": "sum(chiffre_affaires)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "region": {
+                  "regionType": "mapbox-v4-admin",
+                  "admin0": {
+                    "fieldName": "pays",
+                    "type": "field",
+                    "geographicRole": "admin0-unit-code"
+                  },
+                  "admin1": {
+                    "fieldName": "etat_iso",
+                    "type": "field",
+                    "geographicRole": "admin1-iso-3166-2"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "top-5-meilleurs-clients",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "06a3c1d6",
+                  "fields": [
+                    {
+                      "name": "id_client",
+                      "expression": "`id_client`"
+                    },
+                    {
+                      "name": "sum(total_depense)",
+                      "expression": "SUM(`total_depense`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "### <span style=\"text-align:center;display:block\">Top 5 des Meilleurs Clients</span>",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "id_client",
+                  "displayName": "Id client",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_depense)",
+                  "displayName": "Total depense",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "volume-commandes-par-jour-semaine",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "1c97b188",
+                  "fields": [
+                    {
+                      "name": "jour_semaine",
+                      "expression": "`jour_semaine`"
+                    },
+                    {
+                      "name": "nombre_commandes",
+                      "expression": "`nombre_commandes`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Volume des Commandes par Jour de la Semaine"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "jour_semaine",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "nombre_commandes",
+                  "displayName": "Nombre de commandes",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 16,
+            "width": 6,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "top-5-vendeurs-chiffre-affaires-barres-horizontales",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ae4b12e1",
+                  "fields": [
+                    {
+                      "name": "chiffre_affaires_vendeur",
+                      "expression": "`chiffre_affaires_vendeur`"
+                    },
+                    {
+                      "name": "seller_id",
+                      "expression": "`seller_id`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Top 5 des Vendeurs par Chiffre d'Affaires"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "chiffre_affaires_vendeur",
+                  "displayName": "Chiffre d'affaires",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "seller_id",
+                  "displayName": "Vendeur",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 16,
+            "width": 6,
+            "height": 4
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "25c7010c",
+      "displayName": "Filtres globaux",
+      "layout": [
+        {
+          "widget": {
+            "name": "date",
+            "queries": [
+              {
+                "name": "dashboards/01f1a645d800189d978a740768a9ad63/datasets/01f1a645f25e163ca5a2b00e98919db8_mois",
+                "query": {
+                  "datasetName": "1b8a108b",
+                  "fields": [
+                    {
+                      "name": "mois",
+                      "expression": "`mois`"
+                    },
+                    {
+                      "name": "mois_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Date ",
+                  "fields": []
+                }
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "mois",
+                    "queryName": "dashboards/01f1a645d800189d978a740768a9ad63/datasets/01f1a645f25e163ca5a2b00e98919db8_mois"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
