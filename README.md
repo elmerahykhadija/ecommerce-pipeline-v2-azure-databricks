@@ -1,189 +1,115 @@
-# 🚀 E-Commerce Data Pipeline - Azure Databricks & Medallion Architecture
+# 🚀 E-Commerce Data Pipeline & Analytics (v2) - Azure Databricks & Medallion Architecture
+
+> 🔄 **Note sur l'évolution (Migration v2) :** Ce projet représente la **Version 2 (v2)** et constitue une migration majeure par rapport à mon pipeline initial disponible sur GitHub : [E-Commerce-Data-Pipeline (v1)](https://github.com/elmerahykhadija/E-Commerce-Data-Pipeline). 
+> 
+> **Périmètre de cette v2 :** Cette version se concentre exclusivement sur l'ingestion, la transformation et la valorisation analytique (**Data Analytics & Dashboard BI**), sans intégrer de composants de Machine Learning. Elle documente la migration vers le cloud **Microsoft Azure**, l'industrialisation via l'architecture **Medallion**, l'automatisation des flux par **Databricks Workflows**, et la restitution sous forme de **Dashboard Décisionnel SQL**.
+
+---
 
 ## 📋 Contexte et Objectif du Projet
 
-Ce projet consiste à concevoir et mettre en œuvre un **pipeline de données complet et automatisé** basé sur l'architecture **Medallion (Bronze, Silver, Gold)** afin de valoriser les données du dataset public **Brazilian E-commerce (Olist)** disponible sur Kaggle.
+Le projet consiste à concevoir et automatiser un **pipeline de données end-to-end** sur le dataset public **Brazilian E-commerce (Olist)** de Kaggle. 
 
-L'objectif est de construire une plateforme analytique permettant d'**ingérer, nettoyer, transformer et structurer les données e-commerce** afin de produire des données fiables et exploitables pour l'analyse et la prise de décision.
+L'objectif principal est de migrer et moderniser le traitement des données pour offrir une plateforme analytique robuste capable de transformer les données brutes en indicateurs clés de performance (**KPIs**) exploitables pour la prise de décision.
 
-### 🎯 Objectifs principaux
+### 🎯 Objectifs de la Migration (v2)
+* **Migration Cloud & Architecture** : Passage à une architecture Lakehouse sur **Azure Data Lake Storage Gen2** et **Azure Databricks**, structurée selon les couches **Bronze, Silver et Gold**.
+* **Modélisation Analytique** : Structuration de tables propres et normalisées en **schéma en étoile (Star Schema)** dans le catalogue `dbw_lab.gold`.
+* **Orchestration Automatisée** : Mise en place d'un workflow séquentiel via **Databricks Jobs** pour automatiser l'exécution des notebooks de bout en bout.
+* **Restitution BI (Data Analytics)** : Création d'un **Dashboard Databricks SQL** interactif dédié entièrement à l'analyse métier, commerciale et logistique.
 
-* **Data Engineering** : Mettre en place un pipeline permettant l'ingestion, le nettoyage, la transformation et la consolidation des différentes tables du dataset Olist.
-* **Architecture Lakehouse** : Organiser les données selon les couches **Bronze, Silver et Gold** pour séparer les données brutes, nettoyées et prêtes pour l'analyse.
-* **Data Analytics** : Construire des tables analytiques permettant d'étudier les **ventes, clients, produits, vendeurs, paiements, livraisons et avis clients**.
-* **Business Intelligence** : Développer un **dashboard interactif** permettant de suivre les principaux KPI et d'analyser les performances commerciales et opérationnelles.
-* **Aide à la décision** : Fournir des indicateurs et analyses permettant d'identifier les tendances, les performances et les opportunités d'amélioration.
+#### 🔄 Comparaison Architecturale (v1 vs v2)
 
-### ☁️ Environnement Cloud et Technologies
-
-Le projet est déployé dans l'environnement **Microsoft Azure** et s'appuie sur :
-
-* **Azure Data Lake Storage Gen2 (ADLS Gen2)** pour le stockage des données.
-* **Azure Databricks** pour l'ingestion et le traitement distribué avec **PySpark**.
-* **Unity Catalog** pour le catalogage, la gouvernance et la gestion des accès.
-* **Databricks SQL Warehouse** pour l'analyse et l'exécution des requêtes SQL.
-* **Dashboard** pour la visualisation des KPI et des analyses business.
-
+| Composant | Architecture Ancienne (v1) | Nouvelle Architecture (v2 - Azure Databricks) |
+| --- | --- | --- |
+| **Stockage brut & intermédiaire** | AWS S3 | Azure Data Lake Storage (ADLS) Gen2 |
+| **Moteur de traitement** | PySpark | Clusters Databricks (PySpark optimisé) |
+| **Data Warehouse** | Snowflake | Databricks SQL Serverless |
+| **Orchestration** | Apache Airflow | Databricks Workflows |
 
 ---
 
 ## 🛠️ Stack Technique & Outils Utilisés
-* **Cloud Infrastructure** : Azure Resource Group, Azure Data Lake Storage Gen2
-* **Sécurité & IAM** : Microsoft Entra ID (App Registration, Service Principal, Client Secret, SAS Token)
-* **Orchestration & Calcul** : Azure Databricks (Compute Serverless), Apache Spark, Python (Pandas)
-* **Gouvernance des Données** : Unity Catalog
-* **Versionnage & CI/CD** : Git / GitHub (Databricks Repos)
+* **Cloud Infrastructure** : Microsoft Azure (ADLS Gen2 avec Namespace Hiérarchique, réplication LRS)
+* **Sécurité & IAM** : Microsoft Entra ID (Service Principal, Client Secret, SAS Tokens)
+* **Orchestration & Calcul** : Azure Databricks (Compute Serverless), Apache Spark (PySpark), Lakeflow Jobs
+* **Gouvernance & Stockage** : Unity Catalog, Delta Lake
+* **Versionnage & CI/CD** : Git / GitHub (`ecommerce-pipeline-v2-azure-databricks`)
+* **Visualisation** : Databricks SQL Dashboards
 * **Source des données** : Kaggle (`olistbr/brazilian-ecommerce`)
 
 ---
 
-## 🏗️ Étapes Réalisées
+## 🏗️ Étapes de Réalisation du Pipeline (Data Engineering)
 
-### 1. Mise en place de l'Infrastructure Cloud (Azure)
-* Création d'un **Resource Group** dédié, centralisant l'espace de travail Databricks et le stockage.
-* Déploiement d'un compte de stockage **Azure Data Lake Gen2** configuré avec une réplication **LRS** (Locally Redundant Storage).
-* Activation de l'option **Hierarchical Namespace** pour optimiser le stockage analytique.
-* Création du conteneur racine (`bronze`) directement sur le serveur.
+### 1. Infrastructure Cloud & Sécurité (Azure & Entra ID)
+* Configuration du stockage **ADLS Gen2** avec l'activation du *Hierarchical Namespace* pour optimiser les performances analytiques.
 
-### 2. Configuration de la Sécurité et des Accès (Microsoft Entra ID & IAM)
-* Création d'une **App Registration** (Service Principal) dans Microsoft Entra ID, configurée pour utiliser uniquement le tenant Azure actuel (mono-tenant).
-* Récupération des identifiants critiques : **Application (client) ID** et **Tenant ID**.
-* Génération d'un **Client Secret** sécurisé pour l'application.
-* Configuration des droits d'accès via **IAM** (Identity and Access Management) sur le Data Lake.
-* Attribution du rôle **Contributeur aux données en blob du stockage** (*Storage Blob Data Contributor*) au Service Principal.
-* Vérification manuelle de l'attribution des rôles pour garantir l'accès en lecture/écriture au Data Lake.
+  ![Création du compte de stockage](imgs/creation_compte_stockage.png)
 
-### 3. Initialisation de l'Environnement de Développement (CI/CD)
-* Création des notebooks de développement dans Azure Databricks.
-* Liaison de l'espace de travail Databricks (`Databricks Repos`) avec le dépôt distant **GitHub**.
-* Mise en place d'un fichier `.gitignore` strict pour exclure les variables d'environnement.
-* Création et configuration d'un fichier `.env` local pour sécuriser les jetons SAS et les clés de connexion.
+* Sécurisation des accès via **Microsoft Entra ID** (Service Principal, Client Secret) et attribution des rôles IAM (*Contributeur aux données en blob du stockage*) pour permettre à Databricks d'interagir en toute sécurité via des jetons SAS.
 
-### 4. Ingestion des Données Brutes (Couche Bronze)
-La **couche Bronze** correspond à la zone d'atterrissage des données. Son rôle est de **collecter et conserver les données sources dans leur état le plus brut possible**, avec un minimum de transformations, afin de garantir la traçabilité, la reproductibilité et la possibilité de rejouer les traitements en aval.
+  ![Création des conteneurs](imgs/creation_conteneurs.png)
 
-* Téléchargement automatisé du dataset Olist depuis Kaggle vers l'environnement local Databricks.
-* Structuration des données et téléversement des fichiers CSV bruts (`customers`, `orders`, `products`, etc.) directement dans le conteneur cloud Azure Data Lake Gen2 (`bronze/raw_csv/`).
-* Conservation des fichiers dans un format proche de la source pour préserver l'intégrité des données d'origine.
-* Centralisation des données brutes dans une zone unique servant de point d'entrée pour les traitements analytiques ultérieurs.
-* Utilisation du SDK Python `azure-storage-blob` pour garantir l'écriture via le jeton SAS, assurant une compatibilité totale avec les clusters Databricks Serverless.
+### 2. Ingestion et Transformation (Architecture Medallion)
+* **Couche Bronze** : Ingestion brute et traçable des fichiers CSV d'Olist dans le Data Lake (`bronze/raw_csv/`).
 
-### 5. Préparation et Fiabilisation des Données (Couche Silver)
-La **couche Silver** représente l'étape de **nettoyage, standardisation et enrichissement technique** des données issues de la Bronze. L'objectif est d'obtenir des tables fiables, cohérentes et exploitables, prêtes à être utilisées pour les analyses métier et la construction de la couche Gold.
+  ![Conteneur Bronze](imgs/bronze_container.png)
 
-* Nettoyage des données : gestion des valeurs manquantes, suppression des doublons et correction des incohérences.
-* Standardisation des schémas et typage rigoureux des colonnes pour homogénéiser les différentes tables du dataset.
-* Contrôle qualité sur les données clés (identifiants, dates, montants, statuts de commande, informations clients et produits).
-* Préparation des jointures entre tables métier (`orders`, `customers`, `order_items`, `payments`, `reviews`, etc.) pour faciliter les usages analytiques.
-* Production de jeux de données consolidés et fiables servant de base à la modélisation de la couche Gold.
+* **Couche Silver** : Nettoyage des valeurs manquantes, suppression des doublons, typage strict et standardisation de l'ensemble des tables (`customers`, `orders`, `order_items`, `products`, `sellers`, etc.).
 
-### 6. Modélisation Analytique et Valorisation Métier (Couche Gold)
-La **couche Gold** correspond au niveau de **modélisation analytique final**, conçu pour rendre les données directement exploitables par les outils de reporting, de visualisation et d'aide à la décision. Dans ce projet, elle s'appuie sur la création d'un **schéma en étoile** dans le schéma `dbw_lab.gold`, afin d'organiser les données autour d'indicateurs métier clairs et performants.
+  ![Conteneur Silver](imgs/silver_container.png)
 
-* Création de dimensions métier dédiées aux **clients**, **vendeurs**, **produits** et **dates** pour structurer l'analyse.
-* Construction de la table de faits `fact_order_items`, centrée sur les lignes de commande et enrichie avec les informations de commande, de client, de prix et de frais de livraison.
-* Traduction de la catégorie produit via la table `product_category_name_translation` afin de rendre les analyses plus lisibles.
-* Génération d'une dimension date à partir des dates d'achat pour faciliter les analyses temporelles par année, mois, jour et trimestre.
-* Organisation des tables Gold selon une logique orientée **Business Intelligence**, prête pour l'exploration dans Databricks SQL ou dans un dashboard.
-* Export des tables finales du modèle en étoile (`dim_customers`, `dim_sellers`, `dim_products`, `dim_date`, `fact_order_items`) vers le conteneur Azure `gold`, dans le dossier `star_schema/`, pour mise à disposition des consommations aval.
+* **Couche Gold** : Modélisation analytique en **schéma en étoile** dans le catalogue `dbw_lab.gold`, comprenant :
+  * Des dimensions métier (`dim_customers`, `dim_sellers`, `dim_products`, `dim_date`).
+  * Une table de faits centrale (`fact_order_items`) consolidée.
+
+  ![Conteneur Gold](imgs/gold_container.png)
+
+### 3. Orchestration du Pipeline (Databricks Workflows)
+* Mise en place d'un job d'orchestration (`Olist_End_to_End_Pipeline`) versionné via le fichier de configuration YAML sur GitHub.
+* Automatisation de l'enchaînement séquentiel garantissant l'intégrité des flux :
+  1. `Ingestion_Bronze` (Notebook 01)
+  2. `Transformation_Silver` (Notebook 02)
+  3. `Modelisation_Gold` (Notebook 03)
 
 ---
 
-## ⚙️ Mise en place du Pipeline End-to-End
+## 📊 Dashboard Analytique & Interprétation des Résultats (Data Analytics)
 
-Afin d'automatiser l'enchaînement des traitements, une définition de pipeline a été ajoutée dans le fichier `pipline.yml`. Cette configuration permet d'orchestrer les différentes étapes du projet sous forme de **Lakeflow Jobs**, en respectant la logique de dépendance entre les couches Bronze, Silver et Gold.
+Le dashboard décisionnel (**Olist Dashboard**) développé sous Databricks SQL exploite directement les tables de la couche Gold pour offrir une vision multidimensionnelle de l'activité e-commerce :
 
-Le pipeline `Olist_End_to_End_Pipeline` repose sur trois tâches principales exécutées de manière séquentielle :
+![Dashboard Analytique 1](imgs/dash1.png)
 
-* **Ingestion_Bronze** : exécute le notebook `01_bronze` pour télécharger les données sources, les structurer et les déposer dans la couche Bronze.
-* **Transformation_Silver** : exécute le notebook `02_silver` après la réussite de la couche Bronze afin de nettoyer, standardiser et fiabiliser les données.
-* **Modelisation_Gold** : exécute le notebook `03_gold` après la couche Silver pour construire le schéma en étoile analytique et préparer les tables finales destinées au reporting.
+![Dashboard Analytique 2](imgs/dash2.png)
 
-Cette orchestration présente plusieurs avantages :
+### 1. Indicateurs Clés de Performance (KPIs Globaux)
+* **Volume Total des Commandes** : ~96,48 k commandes enregistrées.
+* **Chiffre d'Affaires Global** : ~15,42 M R$ générés.
+* *Interprétation* : Fournit une vue macro instantanée de la volumétrie d'activité et de la santé financière de la plateforme.
 
-* Elle garantit le **respect de l'ordre logique des traitements** grâce aux dépendances entre les tâches.
-* Elle facilite l'**exécution automatisée de bout en bout** du projet.
-* Elle améliore la **maintenabilité** et la **reproductibilité** des traitements.
-* Elle permet une intégration cohérente avec le dépôt GitHub du projet via la section `git_source`.
+### 2. Évolution Mensuelle du Chiffre d'Affaires
+* **Type de graphique** : Courbe temporelle (*Line*).
+* *Interprétation* : Met en évidence une croissance soutenue de l'activité avec des pics de revenus marqués en fin d'année 2017, illustrant la saisonnalité e-commerce (périodes de fêtes / Black Friday).
 
-La configuration active également une file d'attente (`queue.enabled: true`) et un mode `PERFORMANCE_OPTIMIZED`, afin d'améliorer la gestion de l'exécution et les performances du job dans l'environnement Databricks.
+### 3. Répartition des Statuts de Commandes
+* **Type de graphique** : Graphique en anneau (*Donut*).
+* *Interprétation* : La grande majorité des commandes possèdent le statut `delivered` (livrées avec succès), tandis que les volumes d'annulations (`canceled`) restent très marginaux, témoignant d'une bonne maîtrise opérationnelle.
 
-## 📊 Création du Dashboard
+### 4. Répartition Géographique des Ventes par État
+* **Type de graphique** : Carte choroplèthe du Brésil (*Map*).
+* *Interprétation* : Démontre une forte concentration du chiffre d'affaires et de la base clients dans la région Sud-Est du pays, notamment autour de l'État de São Paulo (SP).
 
-La phase de visualisation a consisté à concevoir un **dashboard décisionnel** dans Databricks SQL afin de transformer le modèle Gold en support d'analyse métier. L'objectif du dashboard est de proposer une lecture synthétique et interactive de la performance commerciale, du catalogue produit, de la répartition géographique des clients et du suivi logistique.
+### 5. Top 10 des Catégories les Plus Rentables
+* **Type de graphique** : Histogramme en barres verticales (*Bar*).
+* *Interprétation* : Des segments comme *health_beauty*, *watches_gifts* et *bed_bath_table* surperforment, orientant directement les choix stratégiques marketing et catalogue.
 
-Le dashboard a été construit à partir des tables du schéma `dbw_lab.gold`, en particulier la table de faits `fact_order_items` et les dimensions `dim_date`, `dim_products`, `dim_customers` et `dim_sellers`. Chaque visualisation a été pensée pour répondre à une question métier précise.
+### 6. Volume des Commandes par Jour de la Semaine
+* **Type de graphique** : Histogramme en barres (*Bar*).
+* *Interprétation* : Affiche une constance des achats en semaine avec un léger ralentissement le week-end, renseignant sur les habitudes de navigation des acheteurs.
 
-### 8. Vue d'ensemble
-**Type de graphique :** Carte à indicateurs (*Counter*)
-
-Cette section affiche les KPI globaux les plus importants du projet :
-* **Chiffre d'Affaires Total** : somme de `total_item_value` dans `fact_order_items`.
-* **Nombre de commandes** : comptage distinct des `order_id`.
-
-**Objectif métier :** fournir, dès l'ouverture du dashboard, une vision immédiate du niveau d'activité global de la plateforme e-commerce.
-
-### 9. Tendances des ventes
-**Type de graphique :** Graphique en courbe (*Line*)
-
-Cette visualisation montre l'**évolution mensuelle des revenus** à partir de la jointure entre `fact_order_items` et `dim_date`.
-
-* La table `fact_order_items` fournit les montants de vente.
-* La table `dim_date` permet d'agréger les résultats par mois, trimestre ou année.
-
-**Objectif métier :** identifier les périodes de croissance, les ralentissements, ainsi que la saisonnalité des ventes.
-
-### 10. Performance du catalogue
-**Type de graphique :** Barres horizontales (*Bar*)
-
-Cette section présente le **Top 10 des catégories de produits les plus rentables** en s'appuyant sur la jointure entre `fact_order_items` et `dim_products`.
-
-* `fact_order_items` contient les montants générés par ligne de commande.
-* `dim_products` apporte la catégorie produit traduite pour une lecture plus claire.
-
-**Objectif métier :** repérer les catégories les plus contributrices au chiffre d'affaires et orienter les décisions commerciales ou marketing.
-
-### 11. Analyse géographique
-**Type de graphique :** Carte choroplèthe (*Map*)
-
-Cette visualisation permet de représenter la **densité des clients et le volume de ventes par État** grâce à la jointure entre `fact_order_items` et `dim_customers`.
-
-* `dim_customers` fournit l'information géographique, notamment `customer_state`.
-* `fact_order_items` permet de mesurer le niveau d'activité associé à chaque zone.
-
-**Objectif métier :** localiser les régions les plus actives, détecter les disparités territoriales et mieux cibler les actions commerciales.
-
-### 12. Suivi logistique
-**Type de graphique :** Anneau (*Donut*) ou jauge
-
-Cette partie mesure le **taux de commandes livrées vs annulées** à partir de la colonne `order_status` de `fact_order_items`.
-
-**Objectif métier :** suivre la qualité opérationnelle du processus de commande et identifier les signaux de friction logistique.
-
-### 13. Top vendeurs
-**Type de graphique :** Barres horizontales (*Bar*)
-
-Cette visualisation met en avant les **vendeurs générant le plus de chiffre d'affaires** à partir de `fact_order_items`, avec enrichissement via `dim_sellers`.
-
-* Le calcul repose sur la somme de `total_item_value` par `seller_id`.
-* La jointure avec `dim_sellers` permet d'ajouter des informations de localisation comme la ville et l'État.
-* Un filtre sur `order_status = 'delivered'` permet de ne retenir que les ventes réellement abouties.
-
-**Objectif métier :** identifier les vendeurs les plus performants et mieux comprendre leur contribution à la performance globale de la marketplace.
-
----
-
-## 📈 Interprétation des Résultats
-
-Les résultats du dashboard permettent de dégager plusieurs enseignements métier importants :
-
-* Le **chiffre d'affaires total** et le **volume de commandes** offrent une mesure directe de la performance globale de l'activité e-commerce.
-* L'**évolution mensuelle des revenus** permet de mettre en évidence une dynamique temporelle, utile pour détecter les périodes fortes, les creux d'activité et la saisonnalité.
-* Le **top des catégories de produits** met en avant les segments les plus rentables, ce qui peut orienter les investissements marketing, la gestion de stock ou la stratégie produit.
-* La **répartition géographique des clients et des ventes** aide à comprendre les marchés régionaux les plus actifs et à cibler les zones à fort potentiel.
-* Le **suivi des commandes livrées vs annulées** constitue un indicateur clé de la qualité opérationnelle et de la satisfaction potentielle des clients.
-* Le **classement des vendeurs** permet d'identifier les partenaires les plus performants et de mieux piloter l'écosystème marketplace.
-
-Dans l'ensemble, ce dashboard transforme les données préparées dans la couche Gold en **indicateurs lisibles, actionnables et orientés décision**, facilitant à la fois le suivi de la performance commerciale et l'analyse des enjeux opérationnels.
+### 7. Top 5 des Meilleurs Clients & Top 5 des Vendeurs
+* **Type de graphiques** : Barres horizontales (*Bar*).
+* *Interprétation* : Permet d'identifier rapidement les partenaires e-commerce les plus contributifs et les clients à plus forte valeur (top spenders) pour structurer des actions de fidélisation ciblées.
 
 ---
