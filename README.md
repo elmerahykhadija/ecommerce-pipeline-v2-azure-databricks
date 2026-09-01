@@ -33,7 +33,7 @@ L'objectif principal est de migrer et moderniser le traitement des données pour
 * **Cloud Infrastructure** : Microsoft Azure (ADLS Gen2 avec Namespace Hiérarchique, réplication LRS)
 * **Sécurité & IAM** : Microsoft Entra ID (Service Principal, Client Secret, SAS Tokens)
 * **Orchestration & Calcul** : Azure Databricks (Compute Serverless), Apache Spark (PySpark), Lakeflow Jobs
-* **Gouvernance & Stockage** : Unity Catalog, Delta Lake
+* **Gouvernance & Stockage** : Unity Catalog, format Parquet
 * **Versionnage & CI/CD** : Git / GitHub (`ecommerce-pipeline-v2-azure-databricks`)
 * **Visualisation** : Databricks SQL Dashboards
 * **Source des données** : Kaggle (`olistbr/brazilian-ecommerce`)
@@ -72,6 +72,8 @@ L'objectif principal est de migrer et moderniser le traitement des données pour
   1. `Ingestion_Bronze` (Notebook 01)
   2. `Transformation_Silver` (Notebook 02)
   3. `Modelisation_Gold` (Notebook 03)
+
+![Pipeline d'Orchestration](imgs/pipline.png)
 
 ---
 
@@ -113,3 +115,14 @@ Le dashboard décisionnel (**Olist Dashboard**) développé sous Databricks SQL 
 * *Interprétation* : Permet d'identifier rapidement les partenaires e-commerce les plus contributifs et les clients à plus forte valeur (top spenders) pour structurer des actions de fidélisation ciblées.
 
 ---
+
+## 🌟 Conclusion : Bilan de la Migration (v1 vs v2)
+
+Cette version 2 marque une évolution majeure par rapport au projet initial, en passant d'une pile technique fragmentée à une solution **Cloud-Native unifiée** sur Azure Databricks. 
+
+### Principales différences et avantages de cette v2 :
+1. **Architecture Medallion Intégrée (Lakehouse)** : Bien que l'architecture en couches (Bronze, Silver, Gold) fût déjà présente dans la v1, elle est ici exploitée de manière beaucoup plus fluide et native au sein de l'environnement Azure Databricks, facilitant la gouvernance de bout en bout.
+2. **Écosystème Unifié (Databricks & Lakehouse)** : Là où la v1 nécessitait souvent de jongler entre plusieurs outils séparés (orchestration, calcul, data warehouse), cette v2 centralise l'essentiel. **Databricks Workflows** simplifie drastiquement l'orchestration (remplaçant Apache Airflow), et **Databricks SQL Serverless** permet des requêtes BI performantes directement sur le Data Lake.
+3. **Passage à l'Échelle (Scalabilité) et Sécurité** : L'intégration d'**ADLS Gen2** avec **Microsoft Entra ID** assure un contrôle d'accès sécurisé, et les clusters Databricks offrent des performances de traitement optimisées bien supérieures à un environnement local ou autonome.
+
+En résumé, ce projet v2 illustre l'industrialisation d'un pipeline de données (Data Engineering & Analytics), démontrant comment construire une plateforme moderne, robuste et performante pour piloter l'activité e-commerce.
